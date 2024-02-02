@@ -22,6 +22,7 @@ const getUserName = (array) => {
     console.log(error);
   }
 };
+
 const closeLog = (userName) => {
   console.log(`Thank you for using File Manager, ${userName}, goodbye!`);
 };
