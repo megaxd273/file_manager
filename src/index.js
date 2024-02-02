@@ -1,6 +1,12 @@
+import { opendir } from 'fs/promises';
 import readline from 'node:readline/promises';
 import { homedir } from 'os';
 import { chdir, argv, cwd } from 'process';
+
+const fileType = {
+  1: 'file',
+  2: 'directory',
+};
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -41,9 +47,30 @@ function manage() {
     moveToHomedir();
     currentDirLog();
   }
-  rl.on('line', (line) => {
+  rl.on('line', async (line) => {
     if (line === '.exit') {
       rl.close();
+    }
+    if (line.split(' ')[0] === 'cd') {
+      const path = line.split(' ').slice(1).join(' ').trim();
+      chdir(path);
+      currentDirLog();
+    }
+    if (line === 'up') {
+      chdir('..');
+      currentDirLog();
+    }
+    if (line === 'ls') {
+      const files = await opendir(cwd());
+      let idx = 0;
+      for await (const file of files) {
+        console.log(
+          `${idx++} \"${file.name}\" ${
+            fileType[file[Object.getOwnPropertySymbols(file)[0]]]
+          }`
+        );
+      }
+      currentDirLog();
     }
   });
   rl.on('close', () => closeLog(userName));
