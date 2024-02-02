@@ -1,6 +1,6 @@
 import readline from 'node:readline/promises';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { homedir } from 'os';
+import { chdir, argv, cwd } from 'process';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -22,22 +22,26 @@ const getUserName = (array) => {
     console.log(error);
   }
 };
+const moveToHomedir = () => {
+  chdir(homedir());
+};
 
 const closeLog = (userName) => {
   console.log(`Thank you for using File Manager, ${userName}, goodbye!`);
 };
-const operationLog = () => {
-  console.log(dirname(fileURLToPath(import.meta.url)));
+const currentDirLog = () => {
+  console.log(`You are currently in ${cwd()}`);
 };
 
 function manage() {
-  const userName = getUserName(process.argv);
+  const userName = getUserName(argv);
   if (userName) {
+    console.log(homedir());
     console.log(`Welcome to the File Manager, ${userName}!`);
-    operationLog();
+    moveToHomedir();
+    currentDirLog();
   }
   rl.on('line', (line) => {
-    console.log(`Recieved ${line}`);
     if (line === '.exit') {
       rl.close();
     }
