@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { createReadStream, createWriteStream } from 'fs';
 import { opendir, rename, rm, writeFile } from 'fs/promises';
 import readline from 'node:readline/promises';
@@ -120,6 +121,13 @@ function manage() {
       if (line.split(' ')[1] === '--arch') {
         console.log(arch());
       }
+    }
+    if (line.split(' ')[0] === 'hash') {
+      const filename = line.split(' ')[1];
+      const hash = createHash('sha256');
+      const input = createReadStream(filename);
+      input.pipe(hash.setEncoding('hex')).pipe(process.stdout);
+      currentDirLog();
     }
   });
   rl.on('close', () => closeLog(userName));
