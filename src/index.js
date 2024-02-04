@@ -1,7 +1,7 @@
 import { createReadStream, createWriteStream } from 'fs';
 import { opendir, rename, rm, writeFile } from 'fs/promises';
 import readline from 'node:readline/promises';
-import { homedir } from 'os';
+import { homedir, EOL, cpus, hostname, arch, userInfo } from 'os';
 import { basename, join, relative } from 'path';
 import { chdir, argv, cwd } from 'process';
 
@@ -103,6 +103,23 @@ function manage() {
       const output = createWriteStream(join(newPath, basename(filePath)));
       input.pipe(output);
       await rm(filePath);
+    }
+    if (line.split(' ')[0] === 'os') {
+      if (line.split(' ')[1] === '--EOL') {
+        console.log(JSON.stringify(EOL));
+      }
+      if (line.split(' ')[1] === '--cpus') {
+        console.log(cpus());
+      }
+      if (line.split(' ')[1] === '--homedir') {
+        console.log(homedir());
+      }
+      if (line.split(' ')[1] === '--username') {
+        console.log(userInfo().username);
+      }
+      if (line.split(' ')[1] === '--arch') {
+        console.log(arch());
+      }
     }
   });
   rl.on('close', () => closeLog(userName));
