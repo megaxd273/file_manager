@@ -1,6 +1,8 @@
-import { opendir } from 'fs/promises';
+import { createReadStream, createWriteStream } from 'fs';
+import { opendir, rename, rm, writeFile } from 'fs/promises';
 import readline from 'node:readline/promises';
 import { homedir } from 'os';
+import { basename, join, relative } from 'path';
 import { chdir, argv, cwd } from 'process';
 
 const fileType = {
@@ -42,7 +44,6 @@ const currentDirLog = () => {
 function manage() {
   const userName = getUserName(argv);
   if (userName) {
-    console.log(homedir());
     console.log(`Welcome to the File Manager, ${userName}!`);
     moveToHomedir();
     currentDirLog();
@@ -71,6 +72,37 @@ function manage() {
         );
       }
       currentDirLog();
+    }
+    if (line.split(' ')[0] === 'add') {
+      const fileName = line.split(' ').slice(1).join(' ').trim();
+      await writeFile(`${cwd()}\\${fileName}`, '');
+    }
+    if (line.split(' ')[0] === 'cat') {
+      const fileName = line.split(' ').slice(1).join(' ').trim();
+      const input = createReadStream(`${cwd()}\\${fileName}`);
+      input.pipe(process.stdout);
+    }
+    if (line.split(' ')[0] === 'rename') {
+      const [oldName, newName] = line.split(' ').slice(1);
+      await rename(oldName, newName);
+    }
+    if (line.split(' ')[0] === 'cp') {
+      const [filePath, newDirPath] = line.split(' ').slice(1);
+      const input = createReadStream(filePath);
+      const newPath = relative(cwd(), newDirPath);
+      const output = createWriteStream(join(newPath, basename(filePath)));
+      input.pipe(output);
+    }
+    if (line.split(' ')[0] === 'rm') {
+      await rm(line.split(' ').slice(1).join(' ').trim());
+    }
+    if (line.split(' ')[0] === 'mv') {
+      const [filePath, newDirPath] = line.split(' ').slice(1);
+      const input = createReadStream(filePath);
+      const newPath = relative(cwd(), newDirPath);
+      const output = createWriteStream(join(newPath, basename(filePath)));
+      input.pipe(output);
+      await rm(filePath);
     }
   });
   rl.on('close', () => closeLog(userName));
