@@ -5,6 +5,11 @@ import readline from 'node:readline/promises';
 import { homedir, EOL, cpus, hostname, arch, userInfo } from 'os';
 import { basename, join, relative } from 'path';
 import { chdir, argv, cwd } from 'process';
+import {
+  brotliCompress,
+  createBrotliCompress,
+  createBrotliDecompress,
+} from 'zlib';
 
 const fileType = {
   1: 'file',
@@ -127,6 +132,26 @@ function manage() {
       const hash = createHash('sha256');
       const input = createReadStream(filename);
       input.pipe(hash.setEncoding('hex')).pipe(process.stdout);
+      currentDirLog();
+    }
+    if (line.split(' ')[0] === 'compress') {
+      const filename = line.split(' ')[1];
+      const compressedFileName = `${filename}.br`;
+      const transform = createBrotliCompress();
+      const output = createWriteStream(compressedFileName);
+      const input = createReadStream(filename);
+      const stream = input.pipe(transform).pipe(output);
+      stream.on('finish', () => console.log('done compressing'));
+      currentDirLog();
+    }
+    if (line.split(' ')[0] === 'decompress') {
+      const filename = line.split(' ')[1];
+      const decompressedFileName = filename.replace(/\.br\b/g, '');
+      const transform = createBrotliDecompress();
+      const output = createWriteStream(decompressedFileName);
+      const input = createReadStream(filename);
+      const stream = input.pipe(transform).pipe(output);
+      stream.on('finish', () => console.log('done compressing'));
       currentDirLog();
     }
   });
