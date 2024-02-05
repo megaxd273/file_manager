@@ -19,12 +19,14 @@ export const moveToHomedir = () => {
 export const closeLog = (userName) => {
   console.log(`Thank you for using File Manager, ${userName}, goodbye!`);
 };
-export const currentDirLog = () => {
-  console.log(`You are currently in ${cwd()}`);
+export const currentDirLog = async () => {
+  return new Promise((res) => {
+    const currentdir = cwd();
+    console.log(`You are currently in ${currentdir}`);
+    res();
+  });
 };
-export const getCommand = (line) => {
-  return line.split(' ')[0];
-};
+
 export const getArguments = (line) => {
   const args = [];
   let currentArg = '';
