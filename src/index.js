@@ -6,130 +6,64 @@ import { homedir, EOL, cpus, arch, userInfo } from 'os';
 import { basename, join, relative } from 'path';
 import { chdir, argv, cwd } from 'process';
 import { createBrotliCompress, createBrotliDecompress } from 'zlib';
-
-const fileType = {
-  1: 'file',
-  2: 'directory',
-};
+import { ls, cd, up } from './services/nwd.js';
+import {
+  createFile,
+  readFile,
+  renameFile,
+  copyFile,
+  removeFile,
+  moveFile,
+} from './services/fs.js';
+import {
+  getUserName,
+  moveToHomedir,
+  closeLog,
+  currentDirLog,
+  getCommand,
+  getArguments,
+} from './utils/index.js';
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
-
-const getUserName = (array) => {
-  try {
-    if (array.length > 3) {
-      throw new Error('Operation failed');
-    }
-    const argument = array.at(-1).split('=')[1];
-    return argument;
-  } catch (error) {
-    console.log(error);
-  }
+const commands = {
+  '.exit': () => rl.close(),
+  cd: (path) => cd(path),
+  up: () => up(),
+  ls: () => ls(),
+  add: (path) => createFile(path),
+  cat: (path) => readFile(path),
+  rename: (path, newPath) => renameFile(path, newPath),
+  cp: (path, newPath) => copyFile(path, newPath),
+  rm: (path) => removeFile(path),
+  mv: (path, newPath) => moveFile(path, newPath),
 };
-const moveToHomedir = () => {
-  chdir(homedir());
-};
-
-const closeLog = (userName) => {
-  console.log(`Thank you for using File Manager, ${userName}, goodbye!`);
-};
-const currentDirLog = () => {
-  console.log(`You are currently in ${cwd()}`);
-};
-const getCommand = (line) => {
-  return line.split(' ')[0];
-};
-const getArguments = (line) => {
-  const args = [];
-  let currentArg = '';
-
-  let quoted = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-
-    if (char === ' ' && !quoted) {
-      if (currentArg !== '') {
-        args.push(currentArg);
-        currentArg = '';
-      }
-    } else if (char === '"') {
-      quoted = !quoted;
-    } else {
-      currentArg += char;
-    }
-  }
-
-  if (currentArg !== '') {
-    args.push(currentArg);
-  }
-
-  return args;
-};
-
+//TODO sort ls array
 function manage() {
-  const userName = getUserName(argv);
-  if (userName) {
-    console.log(`Welcome to the File Manager, ${userName}!`);
-    moveToHomedir();
-    currentDirLog();
+  let userName = getUserName(argv);
+  if (!userName) {
+    userName = 'Guest';
   }
+  console.log(`Welcome to the File Manager, ${userName}!`);
+  moveToHomedir();
+  currentDirLog();
   rl.on('line', async (line) => {
-    if (getCommand(line) === '.exit') {
-      rl.close();
+    const [command, ...args] = getArguments(line);
+    if (commands.hasOwnProperty(command)) {
+      commands[command](...args);
+    } else {
+      console.error('Invalid input');
     }
-    if (getCommand(line) === 'cd') {
-      const path = getArguments(line);
-      chdir(path[1]);
-    }
-    if (getCommand(line) === 'up') {
-      chdir('..');
-    }
-    if (getCommand(line) === 'ls') {
-      const files = await opendir(cwd());
-      let idx = 0;
-      for await (const file of files) {
-        console.log(
-          `${idx++} \"${file.name}\" ${
-            fileType[file[Object.getOwnPropertySymbols(file)[0]]]
-          }`
-        );
-      }
-    }
-    if (getCommand(line) === 'add') {
-      const fileName = line.split(' ').slice(1).join(' ').trim();
-      await writeFile(`${cwd()}\\${fileName}`, '');
-    }
-    if (getCommand(line) === 'cat') {
-      const fileName = line.split(' ').slice(1).join(' ').trim();
-      const input = createReadStream(`${cwd()}\\${fileName}`);
-      input.pipe(process.stdout);
-    }
-    if (getCommand(line) === 'rename') {
-      const args = getArguments(line);
-      const [oldName, newName] = line.split(' ').slice(1);
-      await rename(args[1], args[2]);
-    }
-    if (getCommand(line) === 'cp') {
-      const [filePath, newDirPath] = line.split(' ').slice(1);
-      const input = createReadStream(filePath);
-      const newPath = relative(cwd(), newDirPath);
-      const output = createWriteStream(join(newPath, basename(filePath)));
-      input.pipe(output);
-    }
-    if (getCommand(line) === 'rm') {
-      await rm(line.split(' ').slice(1).join(' ').trim());
-    }
-    if (getCommand(line) === 'mv') {
-      const [filePath, newDirPath] = line.split(' ').slice(1);
-      const input = createReadStream(filePath);
-      const newPath = relative(cwd(), newDirPath);
-      const output = createWriteStream(join(newPath, basename(filePath)));
-      input.pipe(output);
-      await rm(filePath);
-    }
+    // if (getCommand(line) === 'mv') {
+    //   const [filePath, newDirPath] = line.split(' ').slice(1);
+    //   const input = createReadStream(filePath);
+    //   const newPath = relative(cwd(), newDirPath);
+    //   const output = createWriteStream(join(newPath, basename(filePath)));
+    //   input.pipe(output);
+    //   await rm(filePath);
+    // }
     if (getCommand(line) === 'os') {
       if (line.split(' ')[1] === '--EOL') {
         console.log(JSON.stringify(EOL));
