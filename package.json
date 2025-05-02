@@ -1,0 +1,24 @@
+{
+  "name": "file_manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/megaxd273/file_manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/megaxd273/file_manager/issues"
+  },
+  "homepage": "https://github.com/megaxd273/file_manager#readme"
+}
