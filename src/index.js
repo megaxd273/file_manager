@@ -4,6 +4,8 @@ import { opendir, writeFile, stat, mkdir, rename, rm } from "fs/promises";
 import { createReadStream, createWriteStream } from "fs";
 import { basename, dirname, join } from "path";
 import { pipeline } from "stream/promises";
+import { createHash } from "crypto";
+import { createBrotliCompress, createBrotliDecompress } from "zlib";
 
 const getUsername = () => {
   const template = "--username=";
@@ -113,6 +115,34 @@ const myRm = async (path) => {
   }
 };
 
+const calcHash = async (path) => {
+  const input = createReadStream(path);
+  const hash = createHash("sha256");
+  return new Promise((resolve, reject) => {
+    input.on("readable", () => {
+      const data = input.read();
+      if (data) {
+        hash.update(data);
+      }
+      console.log(hash.digest("hex"));
+      resolve();
+    });
+  });
+};
+
+const compress = async (originPath, destinationPath) => {
+  const input = createReadStream(originPath);
+  const brotli = createBrotliCompress();
+  const output = createWriteStream(destinationPath);
+  await pipeline(input, brotli, output);
+};
+const decompress = async (originPath, destinationPath) => {
+  const input = createReadStream(originPath);
+  const brotli = createBrotliDecompress();
+  const output = createWriteStream(destinationPath);
+  await pipeline(input, brotli, output);
+};
+
 stdout.write(`Welcome to the File Manager, ${getUsername()}!${EOL}`);
 cd(homedir());
 
@@ -173,6 +203,15 @@ stdin.on("data", async (data) => {
     if (data[1].includes("--architecture")) {
       console.log(arch());
     }
+  }
+  if (data[0].includes("hash")) {
+    await calcHash(data[1]);
+  }
+  if (data[0].includes("compress")) {
+    await compress(data[1], data[2]);
+  }
+  if (data[0].includes("decompress")) {
+    await decompress(data[1], data[2]);
   }
 
   pwd();
