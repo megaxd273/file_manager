@@ -21,7 +21,11 @@ const up = () => {
   chdir("..");
 };
 const cd = (path) => {
-  chdir(path);
+  try {
+    chdir(path);
+  } catch (error) {
+    console.log("Operation failed");
+  }
 };
 const ls = async () => {
   const result = [];
@@ -31,7 +35,22 @@ const ls = async () => {
       Type: element.isDirectory() ? "directory" : "file",
     });
   }
-  console.table(result);
+  console.table(
+    result.sort((a, b) => {
+      if (a.Type === "directory" && b.Type === "directory") {
+        return a.Name.localeCompare(b.Name);
+      }
+      if (a.Type === "directory" && b.Type === "file") {
+        return -1;
+      }
+      if (a.Type === "file" && b.Type === "directory") {
+        return 1;
+      }
+      if (a.Type === "file" && b.Type === "file") {
+        return a.Name.localeCompare(b.Name);
+      }
+    })
+  );
 };
 
 stdout.write(`Welcome to the File Manager, ${getUsername()}!${EOL}`);
