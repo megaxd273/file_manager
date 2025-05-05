@@ -1,5 +1,5 @@
 import { stdin, stdout, argv, pid, kill, chdir, cwd } from "process";
-import { EOL, homedir } from "os";
+import { arch, cpus, EOL, homedir, userInfo } from "os";
 import { opendir, writeFile, stat, mkdir, rename, rm } from "fs/promises";
 import { createReadStream, createWriteStream } from "fs";
 import { basename, dirname, join } from "path";
@@ -152,6 +152,29 @@ stdin.on("data", async (data) => {
   if (data[0].includes("rm")) {
     await myRm(data[1]);
   }
+  if (data[0].includes("os")) {
+    if (data[1].includes("--EOL")) {
+      console.log(`${JSON.stringify(EOL)}`);
+    }
+    if (data[1].includes("--cpus")) {
+      console.log(
+        `Amount is ${cpus().length}; Model is ${cpus()[0]
+          .model.split(" ")
+          .slice(0, -2)
+          .join(" ")}; Speed is ${(cpus()[0].speed / 1000).toFixed(1)} GHz`
+      );
+    }
+    if (data[1].includes("--homedir")) {
+      console.log(homedir());
+    }
+    if (data[1].includes("--username")) {
+      console.log(userInfo().username);
+    }
+    if (data[1].includes("--architecture")) {
+      console.log(arch());
+    }
+  }
+
   pwd();
 });
 process.once("SIGINT", () => {
